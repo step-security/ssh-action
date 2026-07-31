@@ -72,7 +72,7 @@ inputs:
   debug:
     description: "Set to true to enable verbose logging for troubleshooting connection issues."
   allenvs:
-    description: "When true, passes all GitHub Actions environment variables to the remote script."
+    description: "When true, passes all GitHub Actions environment variables to the remote script. This includes sensitive runner tokens such as ACTIONS_RUNTIME_TOKEN. Only use with fully trusted remote servers."
   request_pty:
     description: "Request a pseudo-terminal from the server (required for interactive commands or sudo)."
   curl_insecure:

@@ -14,10 +14,55 @@ readonly ERR_UNKNOWN_ARCH=3
 readonly ERR_DOWNLOAD_FAILED=4
 readonly ERR_INVALID_BINARY=5
 readonly ERR_VERSION_CHECK_FAILED=6
+readonly ERR_CHECKSUM_DOWNLOAD_FAILED=7
+readonly ERR_CHECKSUM_NOT_FOUND=8
+readonly ERR_CHECKSUM_MISMATCH=9
 
 function log_error() {
   echo "$1" >&2
   exit "$2"
+}
+
+function sha256_file() {
+  if command -v sha256sum &>/dev/null; then
+    sha256sum "$1" | awk '{print $1}'
+  elif command -v shasum &>/dev/null; then
+    shasum -a 256 "$1" | awk '{print $1}'
+  else
+    log_error "No SHA256 utility found (sha256sum or shasum required)." "${ERR_INVALID_BINARY}"
+  fi
+}
+
+function verify_checksum() {
+  local binary="$1"
+  local binary_name="$2"
+  local checksums_url="$3"
+  local checksums_file="${binary}.checksums"
+
+  if ! curl -fsSL --retry 5 --keepalive-time 2 --location \
+    "${checksums_url}" -o "${checksums_file}"; then
+    rm -f "${binary}"
+    log_error "Failed to download checksums.txt from ${checksums_url}." "${ERR_CHECKSUM_DOWNLOAD_FAILED}"
+  fi
+
+  local expected
+  expected=$(grep -E "^[a-f0-9]+  ${binary_name}$" "${checksums_file}" | awk '{print $1}')
+  rm -f "${checksums_file}"
+
+  if [[ -z "${expected}" ]]; then
+    rm -f "${binary}"
+    log_error "Binary ${binary_name} not found in checksums.txt." "${ERR_CHECKSUM_NOT_FOUND}"
+  fi
+
+  local actual
+  actual=$(sha256_file "${binary}")
+
+  if [[ "${actual}" != "${expected}" ]]; then
+    rm -f "${binary}"
+    log_error "Checksum mismatch for ${binary_name}. Expected: ${expected}, Got: ${actual}" "${ERR_CHECKSUM_MISMATCH}"
+  fi
+
+  echo "Checksum verified: ${binary_name}"
 }
 
 function detect_client_info() {
@@ -41,15 +86,16 @@ DOWNLOAD_URL_PREFIX="${DRONE_SSH_RELEASE_URL}/v${DRONE_SSH_VERSION}"
 CLIENT_BINARY="drone-ssh-${DRONE_SSH_VERSION}-${CLIENT_PLATFORM}-${CLIENT_ARCH}"
 TARGET="${GITHUB_ACTION_PATH}/${CLIENT_BINARY}"
 
+INSECURE_OPTION=""
+if [[ "${INPUT_CURL_INSECURE}" == 'true' ]]; then
+  INSECURE_OPTION="--insecure"
+fi
+
 # Check if binary already exists and is executable (caching)
 if [[ -f "${TARGET}" ]] && [[ -x "${TARGET}" ]]; then
   echo "Binary ${CLIENT_BINARY} already exists, skipping download"
 else
   echo "Downloading ${CLIENT_BINARY} from ${DOWNLOAD_URL_PREFIX}"
-  INSECURE_OPTION=""
-  if [[ "${INPUT_CURL_INSECURE}" == 'true' ]]; then
-    INSECURE_OPTION="--insecure"
-  fi
 
   # Download with better error handling
   if ! curl -fsSL --retry 5 --keepalive-time 2 --location ${INSECURE_OPTION} \
@@ -61,6 +107,8 @@ else
   if [[ ! -f "${TARGET}" ]] || [[ ! -s "${TARGET}" ]]; then
     log_error "Downloaded file is missing or empty: ${TARGET}" "${ERR_INVALID_BINARY}"
   fi
+
+  verify_checksum "${TARGET}" "${CLIENT_BINARY}" "${DOWNLOAD_URL_PREFIX}/checksums.txt"
 
   chmod +x "${TARGET}"
 fi
