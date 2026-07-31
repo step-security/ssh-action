@@ -2,8 +2,6 @@
 
 # 🚀 SSH for GitHub Actions
 
-English | [繁體中文](./README.zh-tw.md) | [简体中文](./README.zh-cn.md)
-
 ## Table of Contents
 
 - [🚀 SSH for GitHub Actions](#-ssh-for-github-actions)

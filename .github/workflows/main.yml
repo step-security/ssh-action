@@ -67,6 +67,7 @@ jobs:
             cat /tmp/test/hello.txt
 
   check-ssh-key:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -139,6 +140,7 @@ jobs:
           script: whoami
 
   support-key-passphrase:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -220,6 +222,7 @@ jobs:
           use_insecure_cipher: true
 
   multiple-server:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -294,6 +297,7 @@ jobs:
             whoami
 
   support-ed25519-key:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -348,6 +352,7 @@ jobs:
             ls -al
 
   testing-with-env:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -492,6 +497,7 @@ jobs:
             sudo whoami
 
   testing06:
+    if: github.actor != 'dependabot[bot]'
     name: testing ipv6
     runs-on: ubuntu-latest
     steps:
@@ -521,6 +527,7 @@ jobs:
             whoami
 
   testing07:
+    if: github.actor != 'dependabot[bot]'
     name: some special character
     runs-on: ubuntu-latest
     steps:
@@ -566,6 +573,7 @@ jobs:
             whoami
 
   testing-capturing-output:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -707,6 +715,7 @@ jobs:
           fi
 
   testing-script-stop:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -794,6 +803,7 @@ jobs:
           fi
 
   testing-script-error:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
